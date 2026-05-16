@@ -1,8 +1,10 @@
+
 from pydantic import BaseModel, Field, field_validator
 
 
+# Request for a single question
 class PromptRequest(BaseModel):
-    userInput: str = Field(..., min_length=1)
+    userInput: str = Field(..., min_length=1)  # Must have at least 1 character
 
     @field_validator("userInput")
     @classmethod
@@ -13,8 +15,9 @@ class PromptRequest(BaseModel):
         return value
 
 
+# Request model for multiple questions at once
 class BatchPromptRequest(BaseModel):
-    userInputs: list[str] = Field(..., min_length=1)
+    userInputs: list[str] = Field(..., min_length=1)  # List must have at least 1 item
 
     @field_validator("userInputs")
     @classmethod

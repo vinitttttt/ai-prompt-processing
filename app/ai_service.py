@@ -1,3 +1,4 @@
+
 import os
 
 import httpx
@@ -7,9 +8,11 @@ from fastapi import HTTPException
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 
+# Sends a prompt to OpenRouter AI and returns the text response
 async def call_openrouter(final_prompt: str) -> str:
     api_key = os.getenv("OPENROUTER_API_KEY")
     model_name = os.getenv("OPENROUTER_MODEL")
+
 
     if not api_key:
         raise HTTPException(
@@ -23,6 +26,7 @@ async def call_openrouter(final_prompt: str) -> str:
             detail="OPENROUTER_MODEL is missing in .env",
         )
 
+ 
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
@@ -39,7 +43,7 @@ async def call_openrouter(final_prompt: str) -> str:
     }
 
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=30.0) as client: # Send POST request,  timeout after 30s
             response = await client.post(
                 OPENROUTER_API_URL,
                 headers=headers,
@@ -55,6 +59,7 @@ async def call_openrouter(final_prompt: str) -> str:
         )
 
     except httpx.RequestError:
+
         raise HTTPException(
             status_code=503,
             detail="Could not connect to OpenRouter API",
