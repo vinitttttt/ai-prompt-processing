@@ -1,11 +1,35 @@
+import asyncio
+from datetime import datetime, timezone
+
 from fastapi import FastAPI, HTTPException
 
+from .ai_service import call_openrouter
 from .database import database
-from .models import PromptRequest
+from .models import BatchPromptRequest, PromptRequest
 from .utils import build_final_prompt
 
 
 app = FastAPI()
+
+
+async def process_single_question(user_input: str, template: str) -> str:
+    final_prompt = build_final_prompt(
+        template=template,
+        user_input=user_input,
+    )
+
+    ai_response = await call_openrouter(final_prompt)
+
+    history_document = {
+        "userInput": user_input,
+        "finalPrompt": final_prompt,
+        "response": ai_response,
+        "createdAt": datetime.now(timezone.utc),
+    }
+
+    await database.history.insert_one(history_document)
+
+    return ai_response
 
 
 @app.get("/")
@@ -55,11 +79,33 @@ async def ask_question(request: PromptRequest):
     if prompt is None:
         raise HTTPException(status_code=404, detail="Prompt not found")
 
-    final_prompt = build_final_prompt(
-        template=prompt["template"],
+    ai_response = await process_single_question(
         user_input=request.userInput,
+        template=prompt["template"],
     )
 
     return {
-        "response": final_prompt
+        "response": ai_response
+    }
+
+
+@app.post("/ask-batch")
+async def ask_batch_questions(request: BatchPromptRequest):
+    prompt = await database.prompts.find_one({"_id": "Education_Prompt"})
+
+    if prompt is None:
+        raise HTTPException(status_code=404, detail="Prompt not found")
+
+    tasks = [
+        process_single_question(
+            user_input=user_input,
+            template=prompt["template"],
+        )
+        for user_input in request.userInputs
+    ]
+
+    ai_responses = await asyncio.gather(*tasks)
+
+    return {
+        "responses": ai_responses
     }
