@@ -13,20 +13,6 @@ A FastAPI backend project that accepts education-related questions, builds promp
 - python-dotenv
 - Uvicorn
 
-## What This Project Does
-
-This backend supports two main flows:
-
-1. Single question flow
-
-text
-User question
-→ Fetch prompt template from MongoDB
-→ Replace {{userInput}}
-→ Call OpenRouter AI API
-→ Store request and response in history
-→ Return AI response
-
 ## How To Run :
 cd path
 .\venv\Scripts\Activate.ps1
